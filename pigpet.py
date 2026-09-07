@@ -14,6 +14,7 @@
 """
 import os
 import math
+import random
 
 from PyQt5.QtCore import QPoint, QPointF, QSize, Qt, QTimer
 from PyQt5.QtGui import QCursor, QIcon, QKeySequence, QMovie, QPainter, QPixmap
@@ -31,6 +32,8 @@ RESTITUTION = 0.95              # 撞墙反弹系数 (每次撞墙速度乘 0.82
 AIR_DRAG = 0.995                 # 每帧轻微空气阻力 (让它最终能停下)
 STOP_SPEED = 1.0                # 低于此速度即视为停下
 MAX_PULL = 130.0                # 拉伸上限 (px), 拉过一点就不再增大力度
+IDLE_NUDGE_MS = 6000            # 静止这么久(ms)后, 猪会自己朝随机方向"受惊"弹一下 (设为0关闭)
+NUDGE_SPEED = 100.0               # 随机弹射的初速度 (px/tick)
 
 GIF_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pigpig.gif')
 TRAY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tray.png')
@@ -65,6 +68,7 @@ class PigPet(QWidget):
         self.grab_pt = None         # 按下时的点击像素点 (窗口系), 作为拖拽变形轴心
         self.vel = QPointF()        # 速度 (px/tick)
         self.fpos = QPointF(start)  # 精确位置 (含亚像素)
+        self.idle_ms = 0            # 已静止时间累计 (ms), 超过阈值触发随机弹射
 
         # 物理定时器
         self.timer = QTimer(self)
@@ -206,10 +210,25 @@ class PigPet(QWidget):
         self.flying = True
         self.stretch = QPointF()
 
+    def _nudge(self):
+        # 随机方向"受惊"弹射: 力量固定为 NUDGE_SPEED, 方向完全随机
+        ang = random.uniform(0, 2 * math.pi)
+        self.vel = QPointF(NUDGE_SPEED * math.cos(ang), NUDGE_SPEED * math.sin(ang))
+        self.flying = True
+
     # ---------------- 物理 ---------------
     def _step(self):
         if not self.flying:
+            # 静止计时: 长时间不动, 猪会自己朝随机方向"受惊"弹一下
+            if self.dragging:
+                self.idle_ms = 0
+            elif IDLE_NUDGE_MS > 0:
+                self.idle_ms += TIMER_INTERVAL
+                if self.idle_ms >= IDLE_NUDGE_MS:
+                    self.idle_ms = 0
+                    self._nudge()
             return
+        self.idle_ms = 0        # 只要在飞行, 就不算静止
         geo = self._current_geo()
         dist = math.hypot(self.vel.x(), self.vel.y())
         steps = max(1, int(math.ceil(dist / MAX_STEP)))
