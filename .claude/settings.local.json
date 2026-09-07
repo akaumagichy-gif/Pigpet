@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python _measure_gif.py)",
+      "Bash(python -c \"print\\('hi'\\)\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(printf 'print\\(\"script ok\"\\)\\\\n')",
+      "Bash(python /c/Users/user/_t.py)",
+      "Bash(python \"C:/Users/user/_t.py\")",
+      "Bash(echo \"exit2=$?\")",
+      "Bash(mkdir -p /c/Users/user/_measure)",
+      "Bash(cp \"H:/自研小项目/旋转猪猪桌宠/pigpig.gif\" /c/Users/user/_measure/pigpig.gif)",
+      "Read(//c/Users/user/**)",
+      "Bash(python *)",
+      "Bash(py \"C:/Users/user/_measure/measure.py\")",
+      "Bash(cmd //c \"python C:/Users/user/_measure/measure.py\")"
+    ]
+  }
+}
